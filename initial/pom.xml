@@ -27,7 +27,20 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>org.webeid.security</groupId>
+			<artifactId>authtoken-validation</artifactId>
+			<version>2.0.0</version>
+		</dependency>
 	</dependencies>
+
+	<repositories>
+		<repository>
+			<id>gitlab</id>
+			<url>https://gitlab.com/api/v4/projects/19948337/packages/maven</url>
+		</repository>
+	</repositories>
 
 	<build>
 		<plugins>
