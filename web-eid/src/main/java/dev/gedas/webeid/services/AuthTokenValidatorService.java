@@ -5,10 +5,11 @@ import eu.webeid.security.validator.AuthTokenValidator;
 import eu.webeid.security.validator.AuthTokenValidatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -17,16 +18,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
-public class AuthTokenValidatorBean {
-
-    private static final String CERTS_RESOURCE_PATH = "/certs";
+public class AuthTokenValidatorService {
 
     @Bean
     public AuthTokenValidator validator() {
         try {
             return new AuthTokenValidatorBuilder()
-                    .withSiteOrigin(URI.create("https://localhost:5001"))
-//                    .withSiteOrigin(URI.create("https://56ae-84-50-135-113.ngrok.io"))
+                    .withSiteOrigin(URI.create(System.getenv("ORIGIN_URL")))
                     .withTrustedCertificateAuthorities(loadTrustedCACertificatesFromCerFiles())
                     .build();
         } catch (JceException e) {
@@ -40,12 +38,14 @@ public class AuthTokenValidatorBean {
         try {
             CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
 
-            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-            Resource[] resources = resolver.getResources(CERTS_RESOURCE_PATH + "/*.cer");
-
-            for (Resource resource : resources) {
-                X509Certificate caCertificate = (X509Certificate) certFactory.generateCertificate(resource.getInputStream());
-                caCertificates.add(caCertificate);
+            File[] files = new File("/certs").listFiles((f, n) -> n.endsWith(".cer"));
+            if (files != null) {
+                for (File file : files) {
+                    try (InputStream stream = new FileInputStream(file)) {
+                        X509Certificate caCertificate = (X509Certificate) certFactory.generateCertificate(stream);
+                        caCertificates.add(caCertificate);
+                    }
+                }
             }
 
         } catch (CertificateException | IOException e) {
